@@ -1,0 +1,193 @@
+﻿<div id="table" class="row"></div>
+<div id="AddBlock">
+
+    <div class=" form-group row">
+        <label for="name" class="col-sm-3 col-form-label">Оборудование</label>
+        <select class="form-control" id="selectE"></select>
+    </div>
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-3 col-form-label">Вид работы</label>
+        <select class="form-control" id="selectH"></select>
+    </div>
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-3 col-form-label">Дата получения</label>
+        <div class="col-sm-6">
+            <input class="form-control" type="date" name="date_add" id="date_add" value="2020-08-15">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-3 col-form-label">Дата выполнения</label>
+        <div class="col-sm-6">
+            <input class="form-control" type="date" name="date_add2" id="date_add2" value="2020-08-15">
+        </div>
+    </div>
+
+    <div class="col">
+        <button id="Add" class="btn btn-info">Добавить</button>
+    </div>
+</div>
+@section scripts{
+    <script src="http://www.datejs.com/build/date.js" type="text/javascript"></script>
+    <script>
+        $(document).ready(function () {
+            Fill_all();
+            Fill_oboryd();
+            Fill_vid_rabot();
+
+            $("#Add").click(function (event) {
+                event.preventDefault();
+                Add();
+            });
+
+        });
+
+        function CreateSelectVid_rabot(array) {
+            $.each(array, function (key, item) {
+                $('#selectH').append('<option value="' + item.Id + '">' + item.Name_vid_rabot + '</option>');
+            });
+        }
+        function CreateSelectOboryd(array) {
+            $.each(array, function (key, item) {
+                $('#selectE').append('<option value="' + item.Id + '">' + item.Model_oboryd + '</option>');
+            });
+        }
+
+        function Fill_vid_rabot() {
+            $.ajax({
+                url: '/api/Fill_Vid_rabot',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    CreateSelectVid_rabot(data);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+        function Fill_oboryd() {
+            $.ajax({
+                url: '/api/Fil_Oboryd',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    CreateSelectOboryd(data);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        function Fill_all() {
+            $.ajax({
+                url: '/api/Fill_Rabot',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    Fill_table(data);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        function Add() {
+
+            var tr = {
+                ID_oboryd : $('#selectE').val(),
+                ID_vid_rabot: $('#selectH').val(),
+                Data_polychen: $('#date_add').val(),
+                Data_vipolnen: $('#date_add2').val()
+            };
+
+            $.ajax({
+                url: '/api/Rabot_add',
+                type: 'POST',
+                data: JSON.stringify(tr),
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    Fill_all();
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+        function Delete(id) {
+
+            $.ajax({
+                url: '/api/Rabot_delect/' + id,
+                type: 'DELETE',
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    Fill_all();
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        function DeleteItem(el) {
+            var id = $(el).attr('data-item');
+            Delete(id);
+        }
+
+        function Fill_name_vid_rabot(id) {
+            var title =
+                $.ajax({
+                    url: '/api/Vid_rabot/' + id,
+                    type: 'GET',
+                    contentType: "json",
+                    async: false,
+                    success: function (data) {
+                        // console.log(data);
+                        title = data;
+                    },
+                    error: function (x, y, z) {
+                        alert(x + '\n' + y + '\n' + z);
+                    }
+                });
+            return title.responseText;
+        }
+
+        function Fill_model_oboryd(id) {
+            var title =
+                $.ajax({
+                    url: '/api/Oboryd/' + id,
+                    type: 'GET',
+                    contentType: "json",
+                    async: false,
+                    success: function (data) {
+                        // console.log(data);
+                        title = data;
+                    },
+                    error: function (x, y, z) {
+                        alert(x + '\n' + y + '\n' + z);
+                    }
+                });
+            return title.responseText;
+        }
+
+        function Fill_table(data) {
+            var strResult =
+                "<table class='table'><th></th><th>ID</th><th>Оборудование</th><th>Вид работы</th><th>Дата получения</th><th>Дата выполнения</th>";
+            $.each(data, function (index, item) {
+                var oboryd = Fill_model_oboryd(item.ID_oboryd);
+                var vid_rabot = Fill_name_vid_rabot(item.ID_vid_rabot);
+                strResult += " <tr><td><a id='delItem' data-item='" + item.Id + "' onclick='DeleteItem(this);' >Удалить</a></td>" +
+                    " <td>" + item.Id + "</td><td> " + oboryd + "</td><td>" +
+                    vid_rabot + "</td><td>" + item.Data_polychen + "</td><td>" + item.Data_vipolnen + "</td></tr>";
+            });
+            strResult += "</table>";
+            $("#table").html(strResult);
+
+        }
+    </script>
+}
+
